@@ -1,0 +1,926 @@
+FORMAT: 1A
+HOST: http://chieftain.emss.co.za/api/v1
+
+# Chieftan
+Chieftan is a task management system built around the concept that automations should be as granular as possible,
+manage a single area of responsibility, and interact through a REST API to enable the construction of higher-order
+human interfaces as needed.
+
+One such interface is the [Chieftan Frontend](https://github.com/EMSSConsulting/chieftan-frontend) which is distributed
+as a set of pure static HTML, CSS and JS files for serving from whichever server you wish. Better yet, it can be pointed
+at your personal Chieftan server, with no need to host the interface yourself - making it simple to manage and update.
+
+With that in mind, Chieftan provides a logical, flexible and data-driven automation API which emphasises the creation
+of reusable action templates which are triggered using a specific set of variables for different contexts. This
+could involve the triggering of a build, where the **git** commit-SHA is a variable passed to your build trigger,
+or the deployment of an application through an Ansible Tower trigger, passing along a build ID from which the compiled
+artifacts may be retrieved.
+
+Above and beyond anything else, the emphasis is on keeping this as flexible and data-driven as possible, so once your
+server is started you should never need to manually change a configuration file - everything can be managed, modified
+and audited through the API.
+
+To ease auditing, all state-changing API methods log information to a read-only audit log, allowing administrators to
+review the changes people have made to system state over time. Users are identified by unique access tokens, with the
+ability for administrators to provision more than one token as needed (should users wish to setup multiple build
+nodes with the possibility of revoking a token at any time).
+
+# Data Structures
+
+## New Project (object)
++ name: Chieftan Server (string, required) - The name you use for this project
++ description: A task management tool powered by a REST API (string, required) - A short description of the project
++ url: https://github.com/EMSSConsulting/chieftan-server (string, required) - A URL at which additional information about the project can be found
+
+## Project (object)
++ id: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of this project
++ name: Chieftan Server (string, required) - The name you use for this project
++ description: A task management tool powered by a REST API (string, required) - A short description of the project
++ url: https://github.com/EMSSConsulting/chieftan-server (string, required) - A URL at which additional information about the project can be found
+
+## Project Summary (object)
++ id: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of this project
++ name: Chieftan Server (string, required) - The name you use for this project+ description: A task management tool powered by a REST API (string, required) - A short description of the project
++ url: https://github.com/EMSSConsulting/chieftan-server (string, required) - A URL at which additional information about the project can be found
+
+
+## New Action (object)
++ name: Deploy (string, required) - The name you use for this action
++ description: Deploy the Chieftan server by triggering a build task (string, required) - A short description of the action
++ vars {} (object, required) - The variables which are defined for this action
++ http (HTTP Request, optional) - An HTTP request to make when this action is invoked for a task
++ configurations (array[Action Configuration], required) - The configurations available for this action when running tasks
+
+## Edit Action (object)
++ name: Deploy (string, optional) - The name you use for this action
++ description: Deploy the Chieftan server by triggering a build task (string, optional) - A short description of the action
++ vars {} (object, optional) - The variables which are defined for this action
++ http (HTTP Request, optional) - An HTTP request to make when this action is invoked for a task
++ configurations (array[Action Configuration], optional) - The configurations available for this action when running tasks
+
+## Action (object)
++ id: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of this project
++ name: Deploy (string, required) - The name you use for this action
++ description: Deploy the Chieftan server by triggering a build task (string, required) - A short description of the action
++ project (Project Summary, required) - The project his action belongs to
++ vars {} (object, required) - The variables which are defined for this action
++ http (HTTP Request, optional) - An HTTP request to make when this action is invoked for a task
++ configurations (array[Action Configuration], required) - The configurations available for this action when running tasks
+
+## Action Summary (object)
++ id: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of this project
++ name: Deploy (string, required) - The name you use for this action
++ description: Deploy the Chieftan server by triggering a build task (string, required) - A short description of the action
+
+## HTTP Request (object)
++ method (enum[string], required) - The HTTP method to use for the request.
+  + members
+    + GET
+    + POST
+    + PUT
+    + PATCH
+    + DELETE
++ url: https://hooks.io/myhook/trigger (string, required) - The URL to which the request should be made
++ headers (object, optional) - The headers to send with your request, you can use moustache `{{var}}` variable substitutions in the header values.
++ data (string, optional) - The data you wish to send with your request. You can use `{{var}}` substitutions in the body, and optionally send an object which will be JSON encoded.
+
+## Action Configuration (object)
++ name: Default (string, required) - The name of the configuration
++ vars (object, required) - The variables which should be overridden for this configuration
+
+## Task Metadata (object)
++ description: Version 1.0.0 (string, required) - A short description of the task
++ url: https://github.com/EMSSConsulting/chieftan-server/commit/4ee7c3b8f26df807964e4f70873604738ee87b3c (string, required) - A URL at which additional information about the task can be found.
+
+## New Task (object)
++ metadata (Task Metadata, required) - The task's metadata
++ vars (object, required) - Variables defined within the scope of this task
+
+## Task (object)
++ id: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of this project
++ created: 20160214T00:00:00.000Z (string, required) - The date and time at which the task was created
++ executed: 20160214T00:00:00.000Z (string, required) - The date and time at which the task was executed
++ completed: 20160214T00:00:00.000Z (string, required) - The date and time at which the task finished executing
++ project (Project Summary, required) - The project this task belongs to
++ action (Action Summary, required) - The action this task belongs to
++ metadata (Task Metadata, required) - The task's metadata
++ vars (object, required) - Variables defined within the scope of this task
++ state: NotExecuted (enum[string], required) - The current state of the task
++ output (string, optional) - The output generated following execution of the task for debugging
+
+## Task Summary (object)
++ id: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of this project
++ metadata (Task Metadata, required) - The task's metadata
+
+## Task Run (object)
++ configuration: Default (string, optional) - The configuration to use when executing this task.
++ vars (object, required) - The additional variables you wish to make use of when running this task.
+
+
+## New User (object)
++ name: Benjamin Pannell (string, required) - The user's actual name.
++ email: admin@sierrasoftworks.com (string, required) - The user's email address.
++ permissions (array[string], optional) - The user's list of permissions.
+
+## User (object)
++ id: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user, derived from their email and compatible with Gravatar.
++ name: Benjamin Pannell (string, required) - The user's actual name.
++ email: admin@sierrasoftworks.com (string, required) - The user's email address.
++ permissions (array[string], required) - The user's list of permissions.
+
+## User Summary (object)
++ id: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user, derived from their email and compatible with Gravatar.
++ name: Benjamin Pannell (string, required) - The user's actual name.
++ email: admin@sierrasoftworks.com (string, required) - The user's email address.
+
+## New Access Token (object)
++ token: abcdefghijklmnopqrstuvwxyz (string, required) - The new access token to register.
+
+## Audit Log Entry (object)
++ id: 0123456789abcdef01234567 (string, required) - The unique ID of the log entry.
++ type (enum[string], required) - The type of action which took place.
+    + Members
+        + user.create
+        + user.tokens.view
+        + user.tokens.create
+        + user.tokens.revoke
+        + project.create
+        + action.create
+        + action.update
+        + task.create
+        + task.run
+        + task.remove
++ user (User Summary, required) - The user who actioned the operation.
++ token: abcdefghijklmnopqrstuvwxyz (string, required) - The auth token used to action the operation.
++ timestamp: 20160214T00:00:00.000Z (string, required) - The time at which the operation took place.
++ context (Audit Log Context, required) - The context of what occurred in the operation, and on what.
+
+## Audit Log Context (object)
++ user (User Summary, optional) - The user on which the action was taken.
++ project (Project Summary, optional) - The project on which the action was taken.
++ action (Action Summary, optional) - The action on which the action was taken.
++ task (Task Summary, optional) - The task on which the action was taken.
++ request (object, optional) - The request data which was submitted.
+
+
+## System Status (object)
++ started: 20160214T00:00:00.000Z (string, required) - The date at which the process started.
+
+
+## Bad Request Error (object)
++ error: Bad Request (string, required) - The HTTP analogue error type
++ code: 400 (number, required) - The HTTP status code for the error
++ message: Expected "item.property" to be a defined non-null value, got "null" instead. (string, required) - A human readable description of the error.
+
+## Unauthorized Error (object)
++ error: Unauthorized (string, required) - The HTTP analogue error type
++ code: 401 (number, required) - The HTTP status code for the error
++ message: You have not provided a valid access token with your request. (string, required) - A human readable description of the error.
+
+## Forbidden Error (object)
++ error: Forbidden (string, required) - The HTTP analogue error type
++ code: 403 (number, required) - The HTTP status code for the error
++ message: You do not have permission to access this resource with the access token you provided. (string, required) - A human readable description of the error.
+
+## Not Found Error (object)
++ error: Not Found (string, required) - The HTTP analogue error type
++ code: 404 (number, required) - The HTTP status code for the error
++ message: The resource you were looking for could not be found (string, required) - A human readable description of the error.
+
+## Conflict Error (object)
++ error: Conflict (string, required) - The HTTP analogue error type
++ code: 409 (number, required) - The HTTP status code for the error
++ message: There is already another entity with the ID you provided. (string, required) - A human readable description of the error.
+
+# Group Projects API
+The Projects API gives you the ability to create and manage projects. Projects
+are the overarching organizational grouping within Chieftan. They are generally
+described using a name and a URL where additional information about the project
+can be found.
+
+## /projects
+### Get List [GET]
+Get the list of projects registered with Chieftan.
+
++ Request
+    + Headers
+    
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[Project])
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
+### Create Project [POST]
+Create a new Chieftan project.
+
++ Request (application/json)
+    + Attributes (New Project)
+    + Headers
+    
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Project)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
+## /project/{project}
+### Details [GET]
+Get the details of a specific project.
+
++ Parameters
+    + project: 0123456789abcdef01234567 (string, required) - The unique ID of the project
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Project)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+# Group Actions API
+
+## /action/{action}
+### Details [GET]
+Get the details of a specific action.
+
++ Parameters
+    + action: 0123456789abcdef01234567 (string, required) - The unique ID of the action
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Action)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### Edit [PUT]
+Change the details of a specific action.
+
++ Parameters
+    + action: 0123456789abcdef01234567 (string, required) - The unique ID of the action
+
++ Request (application/json)
+    + Attributes (Edit Action)
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Action)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+## /project/{project}/actions
+### List [GET]
+Get the list of actions associated with a project.
+
++ Parameters
+    + project: 0123456789abcdef01234567 (string, required) - The unique ID of the project
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[Action])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### Create [POST]
+Create a new action for this project
+
++ Parameters
+    + project: 0123456789abcdef01234567 (string, required) - The unique ID of the project
+
++ Request (application/json)
+    + Attributes (New Action)
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Action)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+# Group Tasks API
+
+## /tasks
+### List [GET]
+Get the list of all tasks generated on the system. Requires the **admin** permission.
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[Action])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+## /task/{task}
+### Check [HEAD]
+Checks whether the given task exists or not, returning no data.
+
++ Parameters
+    + task: 0123456789abcdef01234567 (string, required) - The unique ID of the task
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200
++ Response 400
++ Response 401
++ Response 403
++ Response 404
+
+### Details [GET]
+Fetch the details of a specific task.
+
++ Parameters
+    + task: 0123456789abcdef01234567 (string, required) - The unique ID of the task
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Task)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### Remove [DELETE]
+Remove this task and its history from the server.
+
++ Parameters
+    + task: 0123456789abcdef01234567 (string, required) - The unique ID of the task
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### POST /task/{task}/run
+Begin executing a specific task.
+
++ Parameters
+    + task: 0123456789abcdef01234567 (string, required) - The unique ID of the task
+
++ Request (application/json)
+    + Attributes (Task Run)
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Task)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+## /project/{project}/tasks
+### List [GET]
+Retrieve a list of the tasks for a specific project, ordered most recent first.
+
++ Parameters
+    + project: 0123456789abcdef01234567 (string, required) - The unique ID of the project
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[Task])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### GET /project/{project}/tasks/recent
+Retrieve a list of the most recent tasks for a specific project.
+
++ Parameters
+    + project: 0123456789abcdef01234567 (string, required) - The unique ID of the project
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[Task])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+## /action/{action}/tasks
+### List [GET]
+Retrieve a list of the tasks for a specific action, ordered most recent first.
+
++ Parameters
+    + action: 0123456789abcdef01234567 (string, required) - The unique ID of the action
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[Task])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### Create [POST]
+Create a new task for a specific action.
+
++ Parameters
+    + action: 0123456789abcdef01234567 (string, required) - The unique ID of the action
+
++ Request (application/json)
+    + Attributes (New Task)
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Task)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### GET /action/{action}/tasks/recent
+Retrieve a list of the most recent tasks for a specific action.
+
++ Parameters
+    + action: 0123456789abcdef01234567 (string, required) - The unique ID of the action
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[Task])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### GET /action/{action}/task/latest
+Retrieve the latest created task for a specific action.
+
++ Parameters
+    + action: 0123456789abcdef01234567 (string, required) - The unique ID of the action
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Task)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### POST /action/{action}/task/latest/run
+Run the latest task for a specific action.
+
++ Parameters
+    + action: 0123456789abcdef01234567 (string, required) - The unique ID of the action
+
++ Request (application/json)
+    + Attributes (Task Run)
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Task)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+# Group Users API
+
+## /users
+### Users List [GET]
+Retrieve a list of all the users on this system. Requires the **admin/users** permission.
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[User])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### Create User [POST]
+Create a new user on this system. Requires the **admin/users** permission.
+
++ Request (application/json)
+    + Attributes (New User)
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (User)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+## /user
+### Details [GET]
+Gets the details of the user account associated with the access token you provided.
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (User)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+## /user/{user}
+### Details [GET]
+Fetch the details of a specific user. Requires the **admin/users** permission.
+
++ Parameters
+    + user: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user.
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (User)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+## /user/{user}/tokens
+### Get Tokens [GET]
+Fetch the list of access tokens linked to this user's account. Requires the **admin/users** permission.
+
++ Parameters
+    + user: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user.
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[string])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### Register Token [POST]
+Registers a new access token for a specific user account.
+
++ Parameters
+    + user: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user.
+
++ Request (application/json)
+    + Attributes (New Access Token)
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[string])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
++ Response 409 (application/json)
+    + Attributes (Conflict Error)
+
+## /user/{user}/token/{token}
+### Revoke Token [DELETE]
+
++ Parameters
+    + user: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user.
+    + token: abcdefghijklmnopqrstuvwxyz012345 (string, required) - The access token to revoke.
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[string])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+# Group Audit Log API
+
+## /audit
+### Fetch Log [GET]
+Retrieve the full audit log for review. Requires the **admin** permission.
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[Audit Log Entry])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
+## /audit/{id}
+### Fetch Log [GET]
+Retrieve the full audit log for review. Requires the **admin** permission.
+
++ Parameters
+    + id: 0123456789abcdef01234567 (string, required) - The unique ID of the log entry
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (Audit Log Entry)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+# Group Monitoring API
+### GET /status
+Check whether the system is available, performs a layer 7 healthcheck (application level).
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (System Status)
