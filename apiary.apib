@@ -133,14 +133,20 @@ nodes with the possibility of revoking a token at any time).
 + name: Benjamin Pannell (string, required) - The user's actual name.
 + email: admin@sierrasoftworks.com (string, required) - The user's email address.
 
+## Permissions (object)
++ permissions: (array[string], required) - The set of permissions you wish to add, remove or replace on the user's account.
+
 ## New Access Token (object)
-+ token: abcdefghijklmnopqrstuvwxyz (string, required) - The new access token to register.
++ token: abcdefghijklmnopqrstuvwxyz (string, optional) - The new access token to register.
 
 ## Audit Log Entry (object)
 + id: 0123456789abcdef01234567 (string, required) - The unique ID of the log entry.
 + type (enum[string], required) - The type of action which took place.
     + Members
         + user.create
+        + user.permissions.add
+        + user.permissions.update
+        + user.permissions.remove
         + user.tokens.view
         + user.tokens.create
         + user.tokens.revoke
@@ -779,6 +785,145 @@ Fetch the details of a specific user. Requires the **admin/users** permission.
 + Response 404 (application/json)
     + Attributes (Not Found Error)
 
+## /user/{user}/permissions
+### Grant [POST]
+Add permissions to a user. Requires the **admin/users** permission.
+
++ Parameters
+    + user: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user.
+
++ Request
+    + Attributes (Permissions)
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (User)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### Update [PUT]
+Update a user's permissions. Requires the **admin/users** permission.
+
++ Parameters
+    + user: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user.
+
++ Request
+    + Attributes (Permissions)
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (User)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+### Remove [DELETE]
+Remove permissions from a user's account. Requires the **admin/users** permission.
+
++ Parameters
+    + user: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user.
+
++ Request
+    + Attributes (Permissions)
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (User)
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+
+# Group Tokens API
+
+## /tokens
+### Revoke Tokens [DELETE]
+Revoke all tokens on the server. Requires the **admin/users** permission.
+
++ Parameters
+    + token: abcdefghijklmnopqrstuvwxyz012345 (string, required) - The access token to revoke.
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[string])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
+## /token/{token}
+### Revoke Token [DELETE]
+Revoke a specific access token.
+
++ Parameters
+    + token: abcdefghijklmnopqrstuvwxyz012345 (string, required) - The access token to revoke.
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[string])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
+
 ## /user/{user}/tokens
 ### Get Tokens [GET]
 Fetch the list of access tokens linked to this user's account. Requires the **admin/users** permission.
@@ -807,7 +952,7 @@ Fetch the list of access tokens linked to this user's account. Requires the **ad
     + Attributes (Not Found Error)
 
 ### Register Token [POST]
-Registers a new access token for a specific user account.
+Registers a new access token for a specific user account. Requires the **admin/users** permission.
 
 + Parameters
     + user: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user.
@@ -835,6 +980,32 @@ Registers a new access token for a specific user account.
 
 + Response 409 (application/json)
     + Attributes (Conflict Error)
+
+### Revoke Tokens [DELETE]
+Revoke all of a user's active tokens. Requires the **admin/users** permission.
+
++ Parameters
+    + user: 0123456789abcdef0123456789abcdef (string, required) - The unique ID of the user.
+
++ Request
+    + Headers
+
+            Authorization: Token abcdefghijklmnopqrstuvwxyz012345
+
++ Response 200 (application/json)
+    + Attributes (array[string])
+
++ Response 400 (application/json)
+    + Attributes (Bad Request Error)
+
++ Response 401 (application/json)
+    + Attributes (Unauthorized Error)
+
++ Response 403 (application/json)
+    + Attributes (Forbidden Error)
+
++ Response 404 (application/json)
+    + Attributes (Not Found Error)
 
 ## /user/{user}/token/{token}
 ### Revoke Token [DELETE]
